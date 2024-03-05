@@ -1,14 +1,52 @@
-     pipeline {
-        agent none
-        stages {
-         
-          stage("build & sonarqube") {
-            agent any
+pipeline {
+    agent any
+
+    stages {
+        stage('Start SonarQube Container') {
             steps {
-              withSonarQubeEnv('Sona_TOKEN') {
-                sh 'mvn clean package sonar:sonar'
-              }
+                script {
+                    // Start SonarQube container
+                    docker.image('sonarqube:latest').withRun('-p 9000:9000 --name sonarqube-container') { c ->
+                        // Wait for SonarQube to start (you may need to customize this based on your environment)
+                        sh 'sleep 30'
+                        echo 'hello'
+
+                        // Perform SonarQube analysis
+                        withSonarQubeEnv('SonarQube') {
+                            sh 'mvn sonar:sonar'
+                        }
+                        echo 'helloooo'
+                    }
+                }
             }
-          }
         }
-      }
+
+        stage('Code Checkout and Build') {
+            steps {
+                // Checkout your source code repository
+                git 'https://github.com/vivekpatil8/maven_sonar.git'
+                echo 'helooooooo'
+
+                // Your build steps go here (e.g., Maven, Gradle, etc.)
+                // Customize based on your project requirements
+                // ...
+
+                // Example: Maven build
+                sh 'mvn clean install'
+                echo 'helllllllooo'
+            }
+        }
+    }
+
+     post {
+         always {
+             // Delete SonarQube container after use
+             script {
+                 echo 'hello'
+                 docker.image('sonarqube:latest').inside('-v $PWD:/usr/src/app') {
+                     sh 'docker rm -f sonarqube-container'
+                 }
+             }
+         }
+     }
+}

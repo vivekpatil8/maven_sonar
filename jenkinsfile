@@ -38,15 +38,5 @@ pipeline {
         }
     }
 
-     post {
-         always {
-             // Delete SonarQube container after use
-             script {
-                 echo 'hello'
-                 docker.image('sonarqube:latest').inside('-v $PWD:/usr/src/app') {
-                     sh 'docker rm -f sonarqube-container'
-                 }
-             }
-         }
-     }
+     
 }
